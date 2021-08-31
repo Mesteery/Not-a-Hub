@@ -4,6 +4,9 @@ import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+// the full path of the parent directory of this file
+const dirpath = fileURLToPath(new URL('.', import.meta.url));
+
 /**
  * Get the creation date of a path from git, and fallback to the file
  * creation date from the filesystem (= the file is not yet committed).
@@ -11,6 +14,14 @@ import { fileURLToPath } from 'node:url';
 function getCreationDate(file) {
   const creationDate = spawnSync('git', ['log', '-1', '--format=%ai', '--reverse', file]).stdout.toString('utf8');
   return creationDate ? new Date(creationDate) : statSync(file).birthtime;
+}
+
+/**
+ * Return the relative path of the given path from the given base.
+ * Backslashs are converted to slashs (for Windows users).
+ */
+function relativePath(base, path) {
+  return `./${relative(base, path).replaceAll('\\', '/')}`;
 }
 
 const months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
@@ -34,9 +45,14 @@ function makeIndex(base, posts) {
     const dating = `${months[post.createdAt.getMonth()]} ${post.createdAt.getFullYear()}`;
     // if the group doesn't exist yet, add it
     if (!(dating in groups)) groups[dating] = [];
-    // the post relative path, extension excluded, and backslashs converted to slashs (for Windows users)
-    const relativePath = './' + relative(base, post.path.slice(0, -3)).replaceAll('\\', '/');
-    groups[dating].push(`* [${post.title} ${post.tags.map((tag) => `<kbd>${tag}</kbd>`).join(' ')}](${relativePath})`);
+    // the post relative path, extension excluded
+    const postPath = relativePath(base, post.path.slice(0, -3));
+    const tags = post.tags.map((tag, i, tags) => {
+      // tags are just the names directories, joining them reveals the true path.
+      const path = join(dirpath, tags.slice(0, i + 1).join('/'));
+      return `[<kbd>${tag}</kbd>](${relativePath(base, path)})`;
+    }).join(' ');
+    groups[dating].push(`* [${post.title}](${postPath}) ${tags}`.trimEnd());
   }
   // merge groups' title and posts
   return Object.entries(groups).map(([date, posts]) => `### ${date}\n${posts.join('\n')}`).join('\n\n');
@@ -127,7 +143,6 @@ async function* makeIndexes(path, tags = []) {
   }
 }
 
-const dirpath = fileURLToPath(new URL('.', import.meta.url));
 const posts = [];
 for await (const post of makeIndexes(dirpath)) posts.push(post);
 await writeIndex(dirpath, posts);
