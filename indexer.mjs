@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 /**
  * Get the creation date of a path from git, and fallback to the file
- * creation date from the filesystem (= the file is not yet committed)
+ * creation date from the filesystem (= the file is not yet committed).
  */
 function getCreationDate(file) {
   const creationDate = spawnSync('git', ['log', '-1', '--format=%ai', '--reverse', file]).stdout.toString('utf8');
@@ -16,7 +16,7 @@ function getCreationDate(file) {
 const months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
 /**
- * Transform multiple posts into stringified posts grouped and sorted by their creation date
+ * Transform multiple posts into stringified posts, grouped and sorted by their creation date.
  * ```md
  * ### Juillet 2021
  * * [Ceci est un post <kbd>langages</kbd> <kbd>python</kbd>](/langages/python/ceci-est-un-post)
@@ -32,7 +32,8 @@ function makeIndex(base, posts) {
   for (const post of posts.sort((a, b) => b.createdAt - a.createdAt)) {
     // Date -> "Juillet 2021"
     const dating = `${months[post.createdAt.getMonth()]} ${post.createdAt.getFullYear()}`;
-    if (!(dating in acc)) acc[dating] = [];
+    // if the group doesn't exist yet, add it
+    if (!(dating in groups)) groups[dating] = [];
     // the post relative path, extension excluded, and backslashs converted to slashs (for Windows users)
     const relativePath = './' + relative(base, post.path.slice(0, -3)).replaceAll('\\', '/');
     groups[dating].push(`* [${post.title} ${post.tags.map((tag) => `<kbd>${tag}</kbd>`).join(' ')}](${relativePath})`);
@@ -41,17 +42,17 @@ function makeIndex(base, posts) {
   return Object.entries(groups).map(([date, posts]) => `### ${date}\n${posts.join('\n')}`).join('\n\n');
 }
 
-// Match the Articles sections of a README.md
+// Match the Articles section of a README.md
 // The `d` flag allows to have the match indices (start and end).
 // This will deliberately not match the extra line breaks (at the end of the section).
 const postSectionRegex = /## Articles\n(?:### .+\n(?:\* \[.+\]\(.+\)\n)*(?:\* \[.+\]\(.+\))\n\n)*(?:### .+\n(?:\* \[.+\]\(.+\)\n)*(?:\* \[.+\]\(.+\)))|## Articles/di;
 
 /**
  * Write a index in the given directory.
- * If the index file and Articles sections already exists,
- * the Articles sections will be updated.
- * If the index file already exists but non the Articles sections,
- * the index file will be appended.
+ * If the index file and Articles section already exists,
+ * the Articles section will be updated.
+ * If the index file already exists but non the Articles section,
+ * the Articles section will be appended.
  * If the index file does not exists, it will be created,
  * with only the Articles section.
  */
@@ -95,7 +96,7 @@ const ignoredNames = ['README.md', 'index.md'];
  * Recursively scan the given directory and return an array of posts,
  * with their path, title, creation date, and tags, and create the
  * indexes files in each parent folder.
- * Assets' folder, README.md, and index.md, and files/folders starting with a dot
+ * Assets' folder, README.md, index.md, and files/folders starting with a dot
  * are excluded.
  */
 async function* makeIndexes(path, tags = []) {
