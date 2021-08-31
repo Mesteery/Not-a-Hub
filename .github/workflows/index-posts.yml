@@ -13,7 +13,7 @@ jobs:
         with:
           node-version: 16
       - name: Run indexer
-        run: node _indexer.mjs
+        run: node indexer.mjs
       - uses: peter-evans/create-pull-request@v3
         with:
           title: Update posts indexes
