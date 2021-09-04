@@ -13,6 +13,7 @@ const dirpath = fileURLToPath(new URL('.', import.meta.url));
  */
 function getCreationDate(file) {
   const creationDate = spawnSync('git', ['log', '-1', '--diff-filter=A', '--format=%ai', file]).stdout.toString('utf8').split('\n')[0];
+  console.log(creationDate);
   return creationDate ? new Date(creationDate) : statSync(file).birthtime;
 }
 
@@ -42,7 +43,7 @@ function makeIndex(base, posts) {
   // iterate over posts sorted by creation date
   for (const post of posts.sort((a, b) => b.createdAt - a.createdAt)) {
     // Date -> "Juillet 2021"
-    const dating = `${months[post.createdAt.getMonth()]} ${post.createdAt.getFullYear()}`;
+    const dating = `${months[post.createdAt.getUTCMonth()]} ${post.createdAt.getUTCFullYear()}`;
     // if the group doesn't exist yet, add it
     if (!(dating in groups)) groups[dating] = [];
     // the post relative path, extension excluded
