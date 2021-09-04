@@ -12,7 +12,7 @@ const dirpath = fileURLToPath(new URL('.', import.meta.url));
  * creation date from the filesystem (= the file is not yet committed).
  */
 function getCreationDate(file) {
-  const creationDate = spawnSync('git', ['log', '-1', '--diff-filter=A', '--format=%ai', file]).stdout.toString('utf8').split('\n')[0];
+  const creationDate = spawnSync('git', ['log', '-1', '--diff-filter=A', '--format=%aI', file]).stdout.toString('utf8').split('\n')[0];
   console.log(creationDate);
   return creationDate ? new Date(creationDate) : statSync(file).birthtime;
 }
