@@ -8,10 +8,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - run: git --version
       - name: Setup Node.js 16
         uses: actions/setup-node@v2
         with:
           node-version: 16
+  
       - name: Run indexer
         run: node indexer.mjs
       - uses: peter-evans/create-pull-request@v3
